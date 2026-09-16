@@ -1,5 +1,6 @@
-from app.llm.provider import MockChatModel
 from langchain_core.messages import HumanMessage
+
+from app.llm.provider import MockChatModel
 
 
 def test_mock_chat_model_stitches_findings_together():

@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 115
+target-version = "py311"
+extend-exclude = ["docs", "db", "knowledge_base"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = [
+  "E501",  # line length is enforced loosely via the global line-length setting instead
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

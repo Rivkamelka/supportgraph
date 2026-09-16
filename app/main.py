@@ -4,9 +4,9 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from app.api import routes_chat, routes_health, routes_ingest
 from app.rag.ingest import run_ingest
@@ -46,6 +46,16 @@ app.add_middleware(
 app.include_router(routes_health.router)
 app.include_router(routes_chat.router)
 app.include_router(routes_ingest.router)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Any exception a route didn't already turn into an HTTPException
+    lands here: logged with a full traceback server-side, but the client
+    only ever sees a generic message -- never a raw stack trace, which
+    could leak internal file paths or query shapes."""
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 @app.get("/", include_in_schema=False)

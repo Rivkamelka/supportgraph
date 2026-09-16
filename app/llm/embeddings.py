@@ -13,7 +13,6 @@ from __future__ import annotations
 import hashlib
 import math
 import re
-from typing import List
 
 from langchain_core.embeddings import Embeddings
 
@@ -26,13 +25,13 @@ class HashingEmbeddings(Embeddings):
     def __init__(self, dims: int = 256):
         self.dims = dims
 
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
         return [self._embed(t) for t in texts]
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str) -> list[float]:
         return self._embed(text)
 
-    def _embed(self, text: str) -> List[float]:
+    def _embed(self, text: str) -> list[float]:
         vec = [0.0] * self.dims
         tokens = _TOKEN_RE.findall(text.lower())
         for token in tokens:

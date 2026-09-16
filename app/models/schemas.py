@@ -6,9 +6,12 @@ from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
-    question: str = Field(..., min_length=1, description="The customer's question, in natural language.")
+    question: str = Field(
+        ..., min_length=1, max_length=2000, description="The customer's question, in natural language."
+    )
     customer_id: int | None = Field(
         default=None,
+        ge=1,
         description="Known customer id, if the question is about a specific account (order, loyalty, etc).",
     )
 

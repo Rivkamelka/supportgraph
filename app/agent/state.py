@@ -10,7 +10,7 @@ for parallel branches that all write to the same field.
 from __future__ import annotations
 
 import operator
-from typing import Annotated, Optional
+from typing import Annotated
 
 # LangGraph (via Pydantic v2) needs typing_extensions.TypedDict rather than
 # typing.TypedDict on Python < 3.12, or schema generation for introspection
@@ -26,7 +26,7 @@ class ToolFinding(TypedDict):
 
 class AgentState(TypedDict, total=False):
     question: str
-    customer_id: Optional[int]
+    customer_id: int | None
     routes: list[str]
     results: Annotated[list[ToolFinding], operator.add]
     answer: str

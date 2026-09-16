@@ -1,5 +1,8 @@
 # SupportGraph
 
+[![CI](https://github.com/Rivkamelka/supportgraph/actions/workflows/ci.yml/badge.svg)](https://github.com/Rivkamelka/supportgraph/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A LangGraph-orchestrated e-commerce customer support agent, built to
 demonstrate a realistic multi-database AI-agent architecture: **LangChain
 + LangGraph + RAG/VectorDB + LLMs + AI Agents** on top of **MySQL +
@@ -120,6 +123,36 @@ branch on these settings and return `ChatOpenAI` / `OpenAIEmbeddings`
 instead of the mock classes. `classify_intent` will then use the LLM's
 structured-output mode (`RouteDecision`) instead of the keyword heuristic.
 
+## Development
+
+Install dev dependencies (adds `pytest` and `ruff` on top of the app's own requirements):
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Run the linter and the test suite before pushing:
+
+```bash
+ruff check .
+pytest -v
+```
+
+CI (`.github/workflows/ci.yml`) runs both automatically on every push and pull request against `main`.
+
+### Production hardening
+
+A few things beyond the happy path are worth knowing about:
+
+- **Fault isolation** -- optional dependencies (`pymysql`, `oracledb`, `pymongo`, `qdrant_client`) are imported lazily, inside the functions that use them, not at module load time. A missing or platform-incompatible driver degrades that one data source instead of crashing the whole app at boot -- this is exactly what happened in production on Vercel and is now covered by a regression test.
+- **Rate limiting** -- `/api/ask` is limited per client IP (in-memory fixed-window). This resets on cold start and isn't shared across serverless instances, which is an acceptable, documented trade-off for a demo deployment rather than a real production guarantee.
+- **Global error handling** -- unhandled exceptions return a generic 500 instead of leaking a stack trace, with the real error logged server-side.
+- **Input validation** -- `question` and `customer_id` are bounded (length and range) at the Pydantic model level, before they reach the graph.
+
+See [`docs/adr/0005-production-hardening.md`](docs/adr/0005-production-hardening.md) for the full rationale and what's intentionally left out of scope (shared rate-limit storage, auth, tracing).
+
+Licensed under [MIT](LICENSE).
+
 ## Deploying the API to Vercel (demo mode, no databases)
 
 Vercel runs stateless serverless functions -- it cannot host the MySQL /
@@ -166,6 +199,8 @@ app/
   tools/               LangChain @tool wrappers, one per data source
   agent/               LangGraph state, router, nodes, graph definition
   api/                 FastAPI routers (chat, ingest, health)
+  rate_limit.py        In-memory per-client rate limiting for /api/ask
+  static/index.html    Self-contained landing page / demo chat UI
 db/
   mysql/init/          Schema + seed SQL (customers, orders, order_items)
   mongo/init/          Seed script (products, support_sessions)
@@ -173,4 +208,8 @@ db/
 knowledge_base/        Markdown policy docs indexed into Qdrant for RAG
 docs/adr/              Architecture decision records
 tests/                 Pytest suite (no live DB required)
+.github/workflows/     CI (lint + tests on push/PR)
+pyproject.toml         Ruff configuration
+requirements-dev.txt   Dev-only deps (pytest, ruff)
+LICENSE                MIT
 ```

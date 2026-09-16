@@ -11,7 +11,7 @@ config change, not a code change.
 from __future__ import annotations
 
 import re
-from typing import Any, List, Optional
+from typing import Any
 
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -47,9 +47,9 @@ class MockChatModel(BaseChatModel):
 
     def _generate(
         self,
-        messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        messages: list[BaseMessage],
+        stop: list[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> ChatResult:
         prompt = "\n".join(str(m.content) for m in messages)
@@ -70,7 +70,7 @@ def _synthesize_from_prompt(prompt: str) -> str:
         )
 
     parts: list[str] = []
-    for source, content in findings:
+    for _source, content in findings:
         content = content.strip()
         if not content or content.lower().startswith("no result") or content.lower().startswith("error"):
             continue
