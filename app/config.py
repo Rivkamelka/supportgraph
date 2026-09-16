@@ -13,12 +13,31 @@ app/llm/embeddings.py).
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Any
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _blank_env_vars_use_defaults(cls, data: Any) -> Any:
+        """Some hosts (Vercel included) pre-create an environment variable
+        with an empty string the moment they see its NAME -- e.g. by
+        auto-detecting a committed .env/.env.example -- without it ever
+        being given a real value. An empty string is not a valid int
+        (mysql_port, oracle_port, app_port), so without this it turns
+        "no value was actually configured" into a hard crash at import
+        time instead of silently falling back to this field's default,
+        which is the whole point of demo mode. Treat "" as "not set" for
+        every field, not just the int ones, since the same failure mode
+        could hit any field type later."""
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if v != ""}
+        return data
 
     # --- LLM ---
     llm_provider: str = "mock"  # mock | openai | anthropic
