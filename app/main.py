@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from app.api import routes_chat, routes_health, routes_ingest
-from app.config import settings
 from app.rag.ingest import run_ingest
 
 logger = logging.getLogger("supportgraph")
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 @asynccontextmanager
@@ -45,10 +48,10 @@ app.include_router(routes_chat.router)
 app.include_router(routes_ingest.router)
 
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def root():
-    return {
-        "name": "SupportGraph",
-        "demo_mode": settings.is_demo_mode,
-        "docs": "/docs",
-    }
+    """A small interactive landing page (see app/static/index.html):
+    a live component-status panel plus a form that calls /api/ask
+    directly, so the project can be shown off without a separate
+    frontend. The full machine-readable API stays at /docs."""
+    return FileResponse(STATIC_DIR / "index.html")
